@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Videokê - Festa Carioca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:#f4f7fb;          /* fundo claro */
+      color:#1b1b1b;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* PALETA
+       Fundo:       #f4f7fb
+       Verde escuro:#1b5e20
+       Verde médio: #2e7d32
+       Verde claro: #e8f5e9
+       Cinza texto: #5c6f82
+    */
+
+    /* HEADER FIXO */
+    header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:linear-gradient(135deg,#1b5e20,#2e7d32);
+      border-bottom:1px solid rgba(0,0,0,0.08);
+      padding:10px 16px 12px;
+      text-align:center;
+      box-shadow:0 4px 10px rgba(0,0,0,0.18);
+      color:#ffffff;
+    }
+    header h1{
+      font-size:1.6rem;
+      color:#ffffff;
+      margin-bottom:4px;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+    }
+    header p{
+      font-size:.8rem;
+      color:#e0f2f1;
+      margin-bottom:10px;
+    }
+
+    #toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #busca{
+      padding:8px 16px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.7);
+      background:#ffffff;
+      color:#1b1b1b;
+      font-size:.9rem;
+      min-width:220px;
+      max-width:420px;
+      outline:none;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.06);
+    }
+    #busca::placeholder{
+      color:#90a4ae;
+    }
+    #busca:focus{
+      border-color:#a5d6a7;
+      box-shadow:0 0 0 1px rgba(56,142,60,0.4);
+    }
+
+    .btn{
+      padding:8px 16px;
+      border-radius:999px;
+      border:none;
+      font-size:.84rem;
+      font-weight:600;
+      cursor:pointer;
+      color:#ffffff;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .btn-import{
+      background:linear-gradient(135deg,#43a047,#66bb6a);
+    }
+    .btn-clear{
+      background:linear-gradient(135deg,#43a047,#66bb6a);
+    }
+    .btn span.icone{
+      font-size:1rem;
+    }
+    .btn:hover{
+      filter:brightness(1.05);
+      box-shadow:0 0 8px rgba(0,0,0,0.25);
+    }
+    .btn:active{
+      transform:translateY(1px);
+      box-shadow:0 0 4px rgba(0,0,0,0.25);
+    }
+
+    @media(max-width:767px){
+      .btn-clear,.btn-import{display:none;}  /* remova este bloco se quiser mostrar os botões também no celular */
+    }
+
+    /* PROGRESSO */
+    #prog-wrap{
+      display:none;
+      padding:6px 16px 8px;
+      background:#e8f5e9;
+      border-bottom:1px solid rgba(56,142,60,0.25);
+      font-size:.78rem;
+    }
+    #prog-top{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:4px;
+      color:#2e7d32;
+    }
+    #prog-track{
+      width:100%;
+      height:7px;
+      background:#c8e6c9;
+      border-radius:999px;
+      overflow:hidden;
+      box-shadow:inset 0 0 3px rgba(0,0,0,0.15);
+    }
+    #prog-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#43a047,#c79b2b);
+      transition:width .25s ease-out;
+    }
+
+    /* MENSAGEM */
+    #msg{
+      display:none;
+      margin:8px 16px;
+      padding:9px 12px;
+      border-radius:10px;
+      font-size:.82rem;
+      line-height:1.4;
+      border:1px solid transparent;
+    }
+    #msg.ok{
+      display:block;
+      background:#e8f5e9;
+      border-color:#66bb6a;
+      color:#1b5e20;
+    }
+    #msg.err{
+      display:block;
+      background:#ffebee;
+      border-color:#ef5350;
+      color:#b71c1c;
+    }
+    #msg .fechar{
+      float:right;
+      cursor:pointer;
+      font-weight:bold;
+      margin-left:8px;
+      color:inherit;
+    }
+
+    /* CABEÇALHO DA LISTA */
+    #cabecalho{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background:#ffffff;
+      border-bottom:1px solid rgba(0,0,0,0.08);
+      display:grid;
+      grid-template-columns:80px 1fr 1fr 1.6fr;
+      padding:6px 16px;
+      font-size:.76rem;
+      text-transform:uppercase;
+      color:#2e7d32;
+      font-weight:600;
+      letter-spacing:.08em;
+    }
+
+    #contador{
+      padding:4px 16px;
+      font-size:.76rem;
+      color:#5c6f82;
+      text-align:right;
+    }
+
+    /* LISTA */
+    #lista{flex:1}
+    .linha{
+      display:grid;
+      grid-template-columns:80px 1fr 1fr 1.6fr;
+      padding:8px 16px;
+      border-bottom:1px solid rgba(0,0,0,0.04);
+      font-size:.88rem;
+      align-items:center;
+      background:#ffffff;
+      transition:background .15s, transform .1s;
+    }
+    .linha:nth-child(2n){
+      background:#f1f8e9; /* verde super claro */
+    }
+    .linha:hover{
+      background:#dcedc8;
+      transform:translateY(-1px);
+    }
+
+    /* TODAS AS COLUNAS COM FONTE PRETA (mesmo tom) */
+    .c0,.c1,.c2,.c3{
+      color:#1b1b1b;
+    }
+
+    /* CÓDIGO: mesma fonte do título agora (sem monoespaçada) */
+    .c0{
+      font-weight:400;
+      font-size:.82rem;
+      padding-right:6px;
+    }
+    .c1{
+      font-weight:400;  /* título sem negrito */
+      padding-right:6px;
+    }
+    .c2{
+      font-weight:400;
+      padding-right:6px;
+      font-size:.86rem;
+    }
+    .c3{
+      font-weight:400;
+      font-style:italic;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:.82rem;
+    }
+    .vazio{
+      text-align:center;
+      padding:40px 10px;
+      font-size:1rem;
+      color:#90a4ae;
+    }
+
+    @media(max-width:600px){
+      #cabecalho{
+        grid-template-columns:70px 1.2fr 1fr;
+      }
+      .linha{
+        grid-template-columns:70px 1.2fr 1fr;
+      }
+      .c3,
+      #cabecalho span:last-child{
+        display:none;
+      }
+    }
+
+    /* RODAPÉ FIXO */
+    footer{
+      border-top:1px solid rgba(0,0,0,0.08);
+      padding:9px 12px;
+      font-size:.78rem;
+      text-align:center;
+      color:#5c6f82;
+      background:#ffffff;
+      position:sticky;
+      bottom:0;
+      z-index:5;
+    }
+    footer a{
+      color:#2e7d32;
+      text-decoration:none;
+      font-weight:600;
+    }
+    footer a:hover{
+      text-decoration:underline;
+    }
+
+    #arquivo{display:none}
+
+    /* BARRA DE CONFIRMAÇÃO DE LIMPEZA */
+    #confirm-bar{
+      display:none;
+      margin:4px 16px 0;
+      padding:8px 10px;
+      border-radius:8px;
+      background:#fffde7;
+      border:1px solid #ffecb3;
+      font-size:.8rem;
+      color:#5c6f82;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    #confirm-bar-texto{
+      flex:1;
+    }
+    #confirm-bar-botoes{
+      display:flex;
+      gap:6px;
+      flex-shrink:0;
+    }
+    .btn-mini{
+      border:none;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:.76rem;
+      cursor:pointer;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .btn-mini-sim{
+      background:#e53935;
+      color:#ffffff;
+    }
+    .btn-mini-nao{
+      background:#cfd8dc;
+      color:#37474f;
+    }
+    .btn-mini:hover{
+      filter:brightness(1.05);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Lista de Videokê</h1>
+  <p>Festa Carioca Entretenimentos</p>
+  <div id="toolbar">
+    <input id="busca" placeholder="Buscar título, cantor ou letra..." oninput="filtrar(this.value)">
+    <label for="arquivo" class="btn btn-import">
+      <span class="icone">📥</span><span>Importar CSV</span>
+    </label>
+    <button class="btn btn-clear" onclick="pedirConfirmacaoLimpeza()">
+      <span class="icone">🗑️</span><span>Limpar Lista</span>
+    </button>
+  </div>
+</header>
+
+<div id="prog-wrap">
+  <div id="prog-top">
+    <span id="prog-texto">Lendo...</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div id="prog-track">
+    <div id="prog-fill"></div>
+  </div>
+</div>
+
+<div id="msg">
+  <span class="fechar" onclick="fecharMsg()">x</span>
+  <span id="msg-texto"></span>
+</div>
+
+<!-- Barra de confirmação de exclusão da lista -->
+<div id="confirm-bar">
+  <span id="confirm-bar-texto">Você deseja mesmo limpar toda a lista de músicas agora?</span>
+  <div id="confirm-bar-botoes">
+    <button class="btn-mini btn-mini-sim" onclick="confirmarLimpeza()">Sim</button>
+    <button class="btn-mini btn-mini-nao" onclick="cancelarLimpeza()">Não</button>
+  </div>
+</div>
+
+<input type="file" id="arquivo" accept=".csv,.txt" onchange="importar(this)">
+
+<div id="cabecalho">
+  <span>Código</span>
+  <span>Título</span>
+  <span>Cantor</span>
+  <span>Início da Letra</span>
+</div>
+
+<div id="contador"></div>
+<div id="lista"></div>
+
+<footer>
+  &copy; 2026
+  <a href="https://www.festacarioca.com.br" target="_blank">Festa Carioca Entretenimentos</a>
+  — Todos os direitos reservados.
+</footer>
+
+<script>
+  // --- LISTA INICIAL ---------------------------------------------------------
+  let musicas = [
+    {co:"K001",ti:"Evidências",ca:"Chitãozinho e Xororó",le:"Eu sei que vou te amar..."},
+    {co:"K002",ti:"Fio de Cabelo",ca:"Chitãozinho e Xororó",le:"Eu não consigo nem dormir..."},
+    {co:"K003",ti:"Por Você",ca:"Luan Santana",le:"Juro que eu tentei te esquecer..."},
+    {co:"K004",ti:"Tudo de Você",ca:"Luan Santana",le:"Que que é que te faz tão feliz..."},
+    {co:"K005",ti:"Garçom",ca:"Reginaldo Rossi",le:"Garçom, traz mais uma dose..."},
+    {co:"K006",ti:"A Namorada",ca:"Reginaldo Rossi",le:"A namorada dele é a esposa minha..."},
+    {co:"K007",ti:"Ai Se Eu Te Pego",ca:"Michel Teló",le:"Nossa, nossa, assim você me mata..."},
+    {co:"K008",ti:"Bebê",ca:"Michel Teló",le:"Bebê, você é tudo pra mim..."},
+    {co:"K009",ti:"Ame Mais",ca:"Péricles",le:"Não deixe o amor acabar..."},
+    {co:"K010",ti:"Camarote",ca:"Ivete Sangalo",le:"Tô de camarote, vendo tudo..."},
+    {co:"K011",ti:"Sorte Grande",ca:"Ivete Sangalo",le:"Que sorte a minha te encontrar..."},
+    {co:"K012",ti:"Saudade da Bahia",ca:"Caetano Veloso",le:"Quero que você se pinte..."},
+    {co:"K013",ti:"O Leãozinho",ca:"Caetano Veloso",le:"Você é linda, você é como..."},
+    {co:"K014",ti:"Bate Forte",ca:"Seu Jorge",le:"Bate forte no meu coração..."},
+    {co:"K015",ti:"Carolina",ca:"Chico Buarque",le:"Quem vai acalmar minha cabeça..."},
+    {co:"K016",ti:"Construção",ca:"Chico Buarque",le:"Amou daquela vez como se fosse a última..."},
+    {co:"K017",ti:"Romances de Final de Tarde",ca:"Fagner",le:"Vou passear por esse mundo afora..."},
+    {co:"K018",ti:"Esperando na Janela",ca:"Gilberto Gil",le:"Não quero nem saber do tempo..."},
+    {co:"K019",ti:"Anunciação",ca:"Alceu Valença",le:"Morena tropicana, eu sou seu..."},
+    {co:"K020",ti:"La Belle de Jour",ca:"Alceu Valença",le:"Oh venha, venha, venha meu amor..."}
+  ];
+
+  function ordenar(arr){
+    return arr.slice().sort((a,b)=>
+      String(a.ca||"").localeCompare(String(b.ca||""),"pt-BR")
+    );
+  }
+
+  function desenhar(lista){
+    const listaEl = document.getElementById("lista");
+    const contEl  = document.getElementById("contador");
+    if(!lista.length){
+      listaEl.innerHTML = "<div class='vazio'>🎵 Nenhuma música encontrada.</div>";
+      contEl.textContent = "";
+      return;
+    }
+    contEl.textContent = lista.length+" música"+(lista.length>1?"s":"");
+    listaEl.innerHTML = lista.map(m =>
+      "<div class='linha'>"+
+        "<span class='c0'>"+(m.co||"")+"</span>"+
+        "<span class='c1'>"+(m.ti||"")+"</span>"+
+        "<span class='c2'>"+(m.ca||"")+"</span>"+
+        "<span class='c3'>"+(m.le||"")+"</span>"+
+      "</div>"
+    ).join("");
+  }
+
+  function atualizar(){
+    desenhar(ordenar(musicas));
+  }
+
+  function filtrar(valor){
+    const t = valor.toLowerCase().trim();
+    if(!t){ atualizar(); return; }
+    const filtradas = musicas.filter(m =>
+      String(m.ti||"").toLowerCase().includes(t) ||
+      String(m.ca||"").toLowerCase().includes(t) ||
+      String(m.le||"").toLowerCase().includes(t)
+    );
+    desenhar(ordenar(filtradas));
+  }
+
+  // --- CONFIRMAÇÃO DE LIMPEZA -----------------------------------------------
+  function pedirConfirmacaoLimpeza(){
+    // mostra a barrinha de confirmação
+    document.getElementById("confirm-bar").style.display = "flex";
+  }
+
+  function cancelarLimpeza(){
+    document.getElementById("confirm-bar").style.display = "none";
+  }
+
+  function confirmarLimpeza(){
+    musicas = [];
+    document.getElementById("busca").value = "";
+    fecharMsg();
+    atualizar();
+    document.getElementById("confirm-bar").style.display = "none";
+    mostrarMsg("ok","Lista de músicas foi limpa.");
+  }
+
+  function ajustarCabecalho(){
+    const h = document.querySelector("header").offsetHeight;
+    document.getElementById("cabecalho").style.top = h+"px";
+  }
+
+  // PROGRESSO & MENSAGENS
+  function mostrarProg(on){
+    document.getElementById("prog-wrap").style.display = on?"block":"none";
+  }
+  function setProg(pct,texto){
+    document.getElementById("prog-fill").style.width = pct+"%";
+    document.getElementById("prog-pct").textContent = Math.round(pct)+"%";
+    if(texto) document.getElementById("prog-texto").textContent = texto;
+  }
+
+  function mostrarMsg(tipo,html){
+    const box = document.getElementById("msg");
+    box.className = tipo;
+    document.getElementById("msg-texto").innerHTML = html;
+    box.style.display = "block";
+  }
+  function fecharMsg(){
+    const box = document.getElementById("msg");
+    box.className = "";
+    box.style.display = "none";
+    document.getElementById("msg-texto").innerHTML = "";
+  }
+
+  // AUXILIARES
+  function tiraAspasExtremos(txt){
+    if(!txt) return "";
+    txt = String(txt);
+    if(txt.length >= 2 && txt.charAt(0)==='"' && txt.charAt(txt.length-1)==='"'){
+      return txt.substring(1, txt.length-1);
+    }
+    return txt;
+  }
+
+  function removeAcentosSimples(s){
+    const mapa = {
+      "á":"a","à":"a","ã":"a","â":"a","ä":"a",
+      "é":"e","è":"e","ê":"e","ë":"e",
+      "í":"i","ì":"i","î":"i","ï":"i",
+      "ó":"o","ò":"o","õ":"o","ô":"o","ö":"o",
+      "ú":"u","ù":"u","û":"u","ü":"u",
+      "ç":"c",
+      "Á":"a","À":"a","Ã":"a","Â":"a","Ä":"a",
+      "É":"e","È":"e","Ê":"e","Ë":"e",
+      "Í":"i","Ì":"i","Î":"i","Ï":"i",
+      "Ó":"o","Ò":"o","Õ":"o","Ô":"o","Ö":"o",
+      "Ú":"u","Ù":"u","Û":"u","Ü":"u",
+      "Ç":"c"
+    };
+    let r = "";
+    for(let i=0;i<s.length;i++){
+      const ch = s.charAt(i);
+      r += mapa[ch] || ch;
+    }
+    return r;
+  }
+
+  // IMPORTAÇÃO CSV LOCAL
+  function importar(input){
+    const arquivo = input.files[0];
+    input.value = "";
+    if(!arquivo) return;
+
+    fecharMsg();
+    mostrarProg(true);
+    setProg(10,"Lendo arquivo: "+arquivo.name);
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      mostrarProg(false);
+      mostrarMsg("err","❌ Erro ao ler o arquivo.");
+    };
+    reader.onload = e => {
+      try{
+        let texto = e.target.result;
+        if(texto && texto.charCodeAt(0) === 0xFEFF) texto = texto.slice(1);
+
+        texto = String(texto);
+        texto = texto.split("\r\n").join("\n");
+        texto = texto.split("\r").join("\n");
+
+        setProg(40,"Processando linhas...");
+
+        let linhas = texto.split("\n");
+        const tmp = [];
+        for(let i=0;i<linhas.length;i++){
+          if(linhas[i].trim() !== "") tmp.push(linhas[i]);
+        }
+        linhas = tmp;
+
+        if(linhas.length < 2){
+          mostrarProg(false);
+          mostrarMsg("err","❌ Arquivo sem dados suficientes. Linhas: "+linhas.length);
+          return;
+        }
+
+        const cab = linhas[0];
+        const sep = cab.indexOf(";") !== -1 ? ";" : ",";
+
+        const cabRaw = cab.split(sep);
+        const cabCols = cabRaw.map(c => tiraAspasExtremos(c.trim()));
+
+        setProg(60,"Lendo colunas...");
+
+        function norm(s){
+          s = String(s||"").toLowerCase();
+          s = removeAcentosSimples(s);
+          return s.trim();
+        }
+
+        let iCo=-1,iTi=-1,iCa=-1,iLe=-1;
+        for(let idx=0; idx<cabCols.length; idx++){
+          const n = norm(cabCols[idx]);
+          if(["codigo","code","cod","num","id"].indexOf(n) !== -1) iCo=idx;
+          if(["titulo","title","musica","nome","song"].indexOf(n) !== -1) iTi=idx;
+          if(["cantor","artista","artist","interprete","banda"].indexOf(n) !== -1) iCa=idx;
+          if(["letra","inicio","trecho","lyrics","lyric"].indexOf(n) !== -1) iLe=idx;
+        }
+
+        if(iTi===-1 && iCa===-1){ iCo=0; iTi=1; iCa=2; iLe=3; }
+
+        setProg(80,"Importando músicas...");
+
+        const novas = [];
+        let ignoradas = 0;
+
+        for(let i=1;i<linhas.length;i++){
+          const linha = linhas[i];
+          const colsRaw = linha.split(sep);
+          const cols = colsRaw.map(c => tiraAspasExtremos(c.trim()));
+
+          const ti = iTi>=0 ? (cols[iTi]||"") : "";
+          const ca = iCa>=0 ? (cols[iCa]||"") : "";
+          const le = iLe>=0 ? (cols[iLe]||"") : "";
+          const co = iCo>=0 ? (cols[iCo]||"") : "";
+
+          if(!ti && !ca){ ignoradas++; continue; }
+          novas.push({co,ti,ca,le});
+        }
+
+        setProg(100,"Concluído!");
+
+        if(!novas.length){
+          mostrarProg(false);
+          mostrarMsg("err",
+            "❌ Nenhuma música importada.<br>"+
+            "Cabeçalho: <b>"+cab+"</b><br>"+
+            "Separador: <b>"+sep+"</b><br>"+
+            "1ª linha de dados: <b>"+(linhas[1]||"(vazia)")+"</b>"
+          );
+          return;
+        }
+
+        musicas = musicas.concat(novas);
+        document.getElementById("busca").value = "";
+        atualizar();
+        setTimeout(()=>mostrarProg(false),600);
+        mostrarMsg("ok",
+          "✅ "+novas.length+" música(s) importada(s)!"+
+          (ignoradas ? " ⚠️ "+ignoradas+" linha(s) ignorada(s) sem título e cantor." : "")
+        );
+      }catch(err){
+        mostrarProg(false);
+        mostrarMsg("err","❌ Erro na importação: "+(err.message||String(err)));
+      }
+    };
+
+    reader.readAsText(arquivo,"ISO-8859-1");
+  }
+
+  // INICIALIZAÇÃO
+  atualizar();
+  ajustarCabecalho();
+  window.addEventListener("resize", ajustarCabecalho);
+</script>
+
+</body>
+</html>
