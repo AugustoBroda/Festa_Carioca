@@ -333,6 +333,91 @@
     .btn-mini:hover{
       filter:brightness(1.05);
     }
+/* Botão de QR só no mobile */
+.qr-button {
+    display: none; /* Desktop não mostra */
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: #008f5a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
+    z-index: 1000;
+}
+
+/* Mostra o botão somente em telas pequenas (celular) */
+@media (max-width: 768px) {
+    .qr-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+/* Modal de QR Code */
+.qr-modal-backdrop {
+    display: none; /* começa escondido */
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1500;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-modal {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 16px 12px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.qr-modal h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: #008f5a;
+}
+
+.qr-modal p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #333;
+}
+
+.qr-modal img {
+    width: 220px;
+    height: 220px;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.qr-modal-close {
+    margin-top: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 999px;
+    border: none;
+    background: #008f5a;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* Opcional: texto pequeno com a URL abaixo do QR */
+.qr-url-text {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #555;
+    word-break: break-all;
+}
   </style>
 </head>
 <body>
@@ -634,7 +719,76 @@
   atualizar();
   ajustarCabecalho();
   window.addEventListener("resize", ajustarCabecalho);
-</script>
+// ===== QR CODE NO MOBILE =====
 
+// URL pública do seu site (ajuste aqui se for diferente)
+const SITE_URL = "https://festa-carioca.vercel.app";
+
+// Gera a URL da imagem de QR Code usando API do Google Chart
+function gerarQrUrl(url) {
+    const base = "https://chart.googleapis.com/chart";
+    const params = new URLSearchParams({
+        cht: "qr",   // tipo: QR code
+        chs: "220x220", // tamanho
+        chl: url,   // conteúdo (URL do site)
+        chld: "L|0" // correção de erro
+    });
+    return base + "?" + params.toString();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const qrButton = document.getElementById("qrButton");
+    const qrModalBackdrop = document.getElementById("qrModalBackdrop");
+    const qrCloseButton = document.getElementById("qrCloseButton");
+    const qrImage = document.getElementById("qrImage");
+    const qrUrlText = document.getElementById("qrUrlText");
+
+    if (!qrButton || !qrModalBackdrop || !qrCloseButton || !qrImage) {
+        // Se algum elemento não existir, não faz nada
+        return;
+    }
+
+    // Define o QR Code para a URL do site
+    const qrImgUrl = gerarQrUrl(SITE_URL);
+    qrImage.src = qrImgUrl;
+    qrUrlText.textContent = SITE_URL;
+
+    // Abre o modal
+    qrButton.addEventListener("click", () => {
+        qrModalBackdrop.style.display = "flex";
+    });
+
+    // Fecha o modal
+    qrCloseButton.addEventListener("click", () => {
+        qrModalBackdrop.style.display = "none";
+    });
+
+    // Clicar fora do card (no fundo escuro) também fecha
+    qrModalBackdrop.addEventListener("click", (ev) => {
+        if (ev.target === qrModalBackdrop) {
+            qrModalBackdrop.style.display = "none";
+        }
+    });
+});
+</script>
+<!-- Botão flutuante (apenas mobile) para abrir o QR Code -->
+<button class="qr-button" id="qrButton">
+    🔗 Ver QR Code
+</button>
+
+<!-- Modal com o QR Code -->
+<div class="qr-modal-backdrop" id="qrModalBackdrop">
+    <div class="qr-modal">
+        <h2>Compartilhe a lista</h2>
+        <p>Abra a câmera e aponte para o QR Code para acessar esta lista de músicas.</p>
+        <!-- QR Code gerado para a URL pública do seu site -->
+        <img
+            id="qrImage"
+            alt="QR Code da lista de músicas"
+        >
+        <div class="qr-url-text" id="qrUrlText"></div>
+        <button class="qr-modal-close" id="qrCloseButton">Fechar</button>
+    </div>
+</div>
 </body>
 </html>
